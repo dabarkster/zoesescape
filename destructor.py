@@ -9,6 +9,8 @@ from Adafruit_LED_Backpack import SevenSegment
 
 add10 = False
 starter = False
+runit = True
+x = 100
 
 topic        = "escapee/destructor"
 topicAll     = topic + "/#"
@@ -18,9 +20,8 @@ topicTimer   = topic + "/timer"
 broker_address="192.168.56.220" 
 client = mqtt.Client("client") #create new instance
 
-x = 0
-led = LED(17)
-print(led.value)
+#led = LED(17)
+#print(led.value)
 
 segment = SevenSegment.SevenSegment(address=0x71)
 # Initialize the display. Must be called once before using the display.
@@ -28,36 +29,47 @@ segment.begin()
 segment.set_colon(1)             
 
 def main():
-    x = 100
     global add10
+    client.on_connect = on_connect
+    client.on_message_add(topicCommand, on_message_command)
+    client.on_message = on_message
+    client.connect(broker_address, 1883, 60) #connect to broker
+    client.loop_start()
+    client.publish(topicStatus,"Starting")#publish
 
+    while runit = True:
+        if starter == False:
+            time.sleep(1)
+            client.publish(topicStatus,"Waiting")
+            print(starter)
 
-    # range from nsec to zero backwards
-    print(starter)
-    while (starter == False):
-        time.sleep(1)
-        client.publish(topicStatus,"Waiting")
-        print(starter)
-        #butt = Button(17)
-        #print(led)
-        #if (led.value == 1):
-        #    print ("Pressed")
-        #    starter = True
+            # range from nsec to zero backwards
+            print(starter)
+            while (starter == False):
+                time.sleep(1)
+                client.publish(topicStatus,"Waiting")
+                print(starter)
+                #butt = Button(17)
+                #print(led)
+                #if (led.value == 1):
+                #    print ("Pressed")
+                #    starter = True
+        else:
+            while ( x >= 0):
+                #client.publish(topicStatus,"Timer")
+                segment.set_colon(1)
+                segment.write_display()
+                time.sleep(0.5)
+                strTime = formatTime(x)
+                displayTime(x, strTime)
+                print(starter)
+                if (add10 == True):
+                    x = x + 10
+                    add10 = False
+                    print(x)
 
-    while ( x >= 0):
-        #client.publish(topicStatus,"Timer")
-        segment.set_colon(1)
-        segment.write_display()
-        time.sleep(0.5)
-        strTime = formatTime(x)
-        displayTime(x, strTime)
-        print(starter)
-        if (add10 == True):
-            x = x + 10
-            add10 = False
-            print(x)
-        
-        x = x - 1
+                x = x - 1
+                
     client.loop_stop()
     client.disconnect()
 
@@ -116,17 +128,8 @@ def on_message_add(client, userdata, msg):
     print("Payload: " + msg.payload)
 
     
-client.on_connect = on_connect
-client.on_message_add(topicCommand, on_message_command)
-client.on_message = on_message
-client.connect(broker_address, 1883, 60) #connect to broker
-client.loop_start()
-client.publish(topicStatus,"Starting")#publish
-
-while (starter == False):
-    time.sleep(1)
-    client.publish(topicStatus,"Waiting")
-    print(starter)
 
 
+if __name__ == "__main__":
+    main()
 
