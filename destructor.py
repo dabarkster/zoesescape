@@ -36,37 +36,32 @@ def main():
     client.connect(broker_address, 1883, 60) #connect to broker
     client.loop_start()
     client.publish(topicStatus,"Starting")#publish
-
+    time.sleep(1) #slight delay to show starting status
+    
     while runit = True:
         if starter == False:
             time.sleep(1)
             client.publish(topicStatus,"Waiting")
-            print(starter)
-
-            # range from nsec to zero backwards
-            print(starter)
-            while (starter == False):
-                time.sleep(1)
-                client.publish(topicStatus,"Waiting")
-                print(starter)
-                #butt = Button(17)
-                #print(led)
-                #if (led.value == 1):
-                #    print ("Pressed")
-                #    starter = True
+            print(starter)            
+            #butt = Button(17)
+            #print(led)
+            #if (led.value == 1):
+            #    print ("Pressed")
+            #    starter = True
+            time.sleep(1)
         else:
             while ( x >= 0):
-                #client.publish(topicStatus,"Timer")
+                client.publish(topicStatus,"Running")
                 segment.set_colon(1)
                 segment.write_display()
-                time.sleep(0.5)
+                time.sleep(0.5) #used to blink colon
                 strTime = formatTime(x)
                 displayTime(x, strTime)
                 print(starter)
                 if (add10 == True):
                     x = x + 10
-                    add10 = False
-                    print(x)
+                    add10 = False #add only once
+                    #print(x)
 
                 x = x - 1
                 
@@ -100,13 +95,27 @@ def displayTime(x, strTime):
     # Wait a quarter second (less than 1 second to prevent colon blinking getting$
     time.sleep(0.5)
 
+def startMeUp():
+    starter = True
+    
+def reset():
+    runit = True
+    starter = False
+
+def add():
+    pass
+
+def daEnd():
+    runit = False
+    starter = False
+
 def on_connect(client, userdata, flags, rc):
   print("Connected with result code " + str(rc))
   client.subscribe(topicAll)
 
 def on_message(client, userdata, msg):
 
-def on_message_add(client, userdata, msg):
+def on_message_command(client, userdata, msg):
     global add10
     msg.payload = msg.payload.decode("utf-8")
 
@@ -116,14 +125,15 @@ def on_message_add(client, userdata, msg):
         
     if "started" in msg.payload:
         client.publish(topicStatus,"Running")
-        starter = True
+        startMeUp()
     
     if "reset" in msg.payload:
-        client.publish(topicStatus,"Running")
-        pass
+        client.publish(topicStatus,"Reseting")
+        reset()
     
     if "end" in msg.payload:
-        pass
+        client.publish(topicStatus,"Done")
+        daEnd()
     
     print("Payload: " + msg.payload)
 
