@@ -22,8 +22,6 @@ x = 0
 led = LED(17)
 print(led.value)
 
-
-
 segment = SevenSegment.SevenSegment(address=0x71)
 # Initialize the display. Must be called once before using the display.
 segment.begin()
@@ -70,8 +68,6 @@ def formatTime(x):
     return "%02d:%02d" % (minutes, seconds_rem)
 
 def displayTime(x, strTime):
-    #minute = now.minute
-    #second = now.second
     minute, second = divmod(x, 60)
 
     segment.clear()
@@ -83,10 +79,10 @@ def displayTime(x, strTime):
     segment.set_digit(3, second % 10)        # Ones
     # Toggle colon
     segment.set_colon(0) 
-    
     # Write the display buffer to the hardware.  This must be called to
     # update the actual display LEDs.
     segment.write_display()
+ 
     client.publish(topicTimer,strTime)
 
     # Wait a quarter second (less than 1 second to prevent colon blinking getting$
@@ -97,27 +93,33 @@ def on_connect(client, userdata, flags, rc):
   client.subscribe(topicAll)
 
 def on_message(client, userdata, msg):
+
+def on_message_add(client, userdata, msg):
     global add10
     msg.payload = msg.payload.decode("utf-8")
 
-    if (msg.topic == topicStatus):
-        print(msg.payload)
-
-    if (msg.topic == topicCommand):
-        if (msg.payload == 'add'):
-            print("msg received")
-            #add10 = True
-
-        if (msg.payload == 'starter'):
-            client.publish(topicStatus,"Running")
-            starter = True
+    if "add" in msg.payload:
+        client.publish(topicStatus,"Adding Time")  # can use node to write this?
+        #add10 = True
+        
+    if "started" in msg.payload:
+        client.publish(topicStatus,"Running")
+        starter = True
+    
+    if "reset" in msg.payload:
+        client.publish(topicStatus,"Running")
+        pass
+    
+    if "end" in msg.payload:
+        pass
     
     print("Payload: " + msg.payload)
 
-
-client.connect(broker_address, 1883, 60) #connect to broker
+    
 client.on_connect = on_connect
+client.on_message_add(topicCommand, on_message_command)
 client.on_message = on_message
+client.connect(broker_address, 1883, 60) #connect to broker
 client.loop_start()
 client.publish(topicStatus,"Starting")#publish
 
