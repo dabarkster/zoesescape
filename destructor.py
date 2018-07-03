@@ -29,7 +29,6 @@ segment.begin()
 segment.set_colon(1)             
 
 def main():
-    global add10
     client.on_connect = on_connect
     client.on_message_add(topicCommand, on_message_command)
     client.on_message = on_message
@@ -39,10 +38,10 @@ def main():
     time.sleep(1) #slight delay to show starting status
     
     while runit = True:
+        print(starter)            
         if starter == False:
             time.sleep(1)
             client.publish(topicStatus,"Waiting")
-            print(starter)            
             #butt = Button(17)
             #print(led)
             #if (led.value == 1):
@@ -50,20 +49,20 @@ def main():
             #    starter = True
             time.sleep(1)
         else:
-            while ( x >= 0):
-                client.publish(topicStatus,"Running")
+            client.publish(topicStatus,"Running")
+            while x >= 0:
                 segment.set_colon(1)
                 segment.write_display()
                 time.sleep(0.5) #used to blink colon
                 strTime = formatTime(x)
-                displayTime(x, strTime)
-                print(starter)
+                client.publish(topicTimer,strTime)
+                displayTime(x)
                 if (add10 == True):
                     x = x + 10
                     add10 = False #add only once
                     #print(x)
 
-                x = x - 1
+                x -= 1
                 
     client.loop_stop()
     client.disconnect()
@@ -74,7 +73,7 @@ def formatTime(x):
     # %02d means integer field of 2 left padded with zero if needed
     return "%02d:%02d" % (minutes, seconds_rem)
 
-def displayTime(x, strTime):
+def displayTime(x):
     minute, second = divmod(x, 60)
 
     segment.clear()
@@ -90,9 +89,7 @@ def displayTime(x, strTime):
     # update the actual display LEDs.
     segment.write_display()
  
-    client.publish(topicTimer,strTime)
-
-    # Wait a quarter second (less than 1 second to prevent colon blinking getting$
+    # Wait a half second (less than 1 second to prevent colon blinking getting$
     time.sleep(0.5)
 
 def startMeUp():
@@ -136,8 +133,6 @@ def on_message_command(client, userdata, msg):
         daEnd()
     
     print("Payload: " + msg.payload)
-
-    
 
 
 if __name__ == "__main__":
